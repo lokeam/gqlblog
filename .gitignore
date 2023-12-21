@@ -2,6 +2,7 @@
 .DS_Store
 .project
 .vscode
+.env
 
 /node_modules
 npm-debug.log*
