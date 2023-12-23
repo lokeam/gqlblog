@@ -39,7 +39,7 @@ export const Mutation = {
 
     return {
       userErrors: [],
-      post
+      post  
     }
   }
 };
