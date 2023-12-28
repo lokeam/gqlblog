@@ -1,6 +1,8 @@
 import { Context } from "../../index";
 import validator from "validator";
 import bcrypt from "bcryptjs";
+import JWT from "jsonwebtoken";
+import { JSON_SIGNATURE } from "../../keys";
 
 interface SignupArgs {
   email: string;
@@ -11,9 +13,9 @@ interface SignupArgs {
 
 interface UserPayload {
   userErrors: {
-    message: string
+    message: string;
   }[]
-  user: null // todo: change this later
+  token: string | null;
 }
 
 export const authResolvers = {
@@ -32,13 +34,14 @@ export const authResolvers = {
             message: "I am error. You didn't provide a valid email"
           }
         ],
-        user: null
+        token: null
       }
     }
 
     const isValidPassWord = validator.isLength(password, {
       min: 5
     });
+    const hashedPass = await bcrypt.hash(password, 10);
 
     if (!isValidPassWord) {
       return {
@@ -47,7 +50,7 @@ export const authResolvers = {
             message: "I am error. Please provided a password longer than 5 characters"
           }
         ],
-        user: null
+        token: null
       };
     }
 
@@ -58,12 +61,12 @@ export const authResolvers = {
             message: "I am error. Your name and bio fields cannot be empty."
           }
         ],
-        user: null
+        token: null
       };
     }
 
-    const hashedPass = await bcrypt.hash(password, 10);
-    await prisma.user.create({
+    
+    const user = await prisma.user.create({
       data: {
         email,
         name,
@@ -71,9 +74,16 @@ export const authResolvers = {
       }
     });
 
+    const token = await JWT.sign({
+      userId: user.id,
+      email: user.email, // debug: adding user email to identify user
+    }, JSON_SIGNATURE, { // Todo: Ideally store JSON_SIG within .env file. Simplified to key const for this project.
+      expiresIn: 8900000
+    }); 
+
     return {
       userErrors: [],
-      user: null
+      token
     }
 
     // return prisma.user.create({
