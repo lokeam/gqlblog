@@ -169,4 +169,78 @@ export const postResolvers = {
         post
       };
     },
+    postPublish: async (
+      _: any,
+      { postId }: { postId: string },
+      { prisma, userInformation }: Context
+      ): Promise<PostPayloadType> => {
+
+        if (!userInformation) {
+          return {
+            userErrors: [
+              {
+                message: "I am error. Unauthenticated access."
+              }
+            ],
+            post: null
+          }
+        }
+    
+        const error = await canUserMutatePost({
+          userId: userInformation.userId,
+          postId: Number(postId),
+          prisma
+        });
+    
+        if (error) return error;
+
+        return {
+          userErrors: [],
+          post: prisma.post.update({
+            where: {
+              id: Number(postId) 
+            },
+            data: {
+              published: true
+            }
+          })
+        }
+    },
+    postUnpublish: async (
+      _: any,
+      { postId }: { postId: string },
+      { prisma, userInformation }: Context
+      ): Promise<PostPayloadType> => {
+
+        if (!userInformation) {
+          return {
+            userErrors: [
+              {
+                message: "I am error. Unauthenticated access."
+              }
+            ],
+            post: null
+          }
+        }
+    
+        const error = await canUserMutatePost({
+          userId: userInformation.userId,
+          postId: Number(postId),
+          prisma
+        });
+    
+        if (error) return error;
+
+        return {
+          userErrors: [],
+          post: prisma.post.update({
+            where: {
+              id: Number(postId) 
+            },
+            data: {
+              published: false
+            }
+          })
+        }
+    }
 };
