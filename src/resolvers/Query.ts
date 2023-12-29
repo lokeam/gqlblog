@@ -8,7 +8,15 @@ export const Query = {
       where: {
         id: userInformation.userId
       }
-    })
+    });
+  },
+  // Get userId from arguments, not context
+  profile: (_: any, { userId }: { userId: string }, { prisma }: Context ) => {
+    return prisma.profile.findUnique({
+      where: {
+        userId: Number(userId)
+      }
+    });
   },
   posts: (_: any, __: any, { prisma }: Context) => {
     // Sort from most to least recent
