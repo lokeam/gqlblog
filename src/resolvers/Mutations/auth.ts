@@ -5,10 +5,19 @@ import JWT from "jsonwebtoken";
 import { JSON_SIGNATURE } from "../../keys";
 
 interface SignupArgs {
-  email: string;
+  credentials: {
+    email: string;
+    password: string;
+  }
   name: string;
   bio: string;
-  password: string;
+}
+
+interface SigninArgs {
+  credentials: {
+    email: string;
+    password: string;
+  }
 }
 
 interface UserPayload {
@@ -21,10 +30,11 @@ interface UserPayload {
 export const authResolvers = {
   signup: async (
     _: any,
-    { email, name, password, bio }: SignupArgs,
+    { credentials, name, bio }: SignupArgs,
     { prisma }: Context
     ): Promise<UserPayload> => {
 
+    const { email, password } = credentials;
     const isEmail = validator.isEmail(email);
 
     if (!isEmail) {
@@ -81,24 +91,52 @@ export const authResolvers = {
       }
     });
 
-    const token = await JWT.sign({
-      userId: user.id,
-      email: user.email, // debug: adding user email to identify user
-    }, JSON_SIGNATURE, { // Todo: Ideally store JSON_SIG within .env file. Simplified to key const for this project.
-      expiresIn: 8900000
-    }); 
+    return {
+      userErrors: [],
+      token: JWT.sign({
+        userId: user.id,
+        email: user.email, // debug: adding user email to identify user
+      }, JSON_SIGNATURE, { // Todo: Ideally store JSON_SIG within .env file. Simplified to key const for this project.
+        expiresIn: 8900000
+      })
+    };
+  },
+  signin: async (
+    _: any,
+    { credentials}: SigninArgs,
+    { prisma }: Context
+  ): Promise<UserPayload> => {
+    const { email, password } = credentials;
+    const user = await prisma.user.findUnique({
+      where: {
+        email
+      }
+    });
+
+    if (!user) {
+      return {
+        userErrors: [
+          { message: "I am error. Invalid credentials." },
+        ],
+        token: null
+      }
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return {
+        userErrors: [
+          { message: "I am error. Invalid credentials." },
+        ],
+        token: null
+      }
+    }
 
     return {
       userErrors: [],
-      token
+      token: JWT.sign({userId: user.id}, JSON_SIGNATURE, {
+        expiresIn: 8900000
+      })
     }
-
-    // return prisma.user.create({
-    //   data: {
-    //     email,
-    //     name,
-    //     password
-    //   }
-    // })
   }
 }
