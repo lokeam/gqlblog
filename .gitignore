@@ -1,10 +1,16 @@
+# dependencies
+client/node_modules
+server/node_modules
+
+# files
 .git
 .DS_Store
 .project
-.vscode
 .env
 keys.ts
 
-/node_modules
 npm-debug.log*
 config.json
+
+# IDE
+.vscode
