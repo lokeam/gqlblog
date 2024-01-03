@@ -1,0 +1,1 @@
+A simple React + Node + Apollo Server GraphQL Social Media (blog) application built from scratch. GraphQL API that uses Prisma v3 to connect to a Postgres database. Associated client-side application built with React.js.
